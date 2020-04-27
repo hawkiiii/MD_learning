@@ -1,0 +1,1692 @@
+# 线程
+
+## 创建线程方式
+
+四种
+
+1. 继承Thread类，重写run，单继承，static共享数据
+2. 实现Runnable接口，重写run，比上一个好
+3. 实现Callable接口，FutureTask返回值
+4. 开一个线程池ConnectionPool，优点：复用，创建使用销毁。
+
+## 谈谈同步代码块中同步监视器和共享数据的理解及各自要求？
+
+同步监视器——锁
+任何一个类的对象可以充当锁
+多个线程公用一把锁
+多个线程共同操作数据，即为共享数据。需要使用同步机制将操作共享数据代码包起来，不能包多了，也不能包少了。
+
+## 解决线程安全问题三种：
+
+- 同步代码块
+- 同步方法
+- lock（ReentrantLock）
+
+## 线程池四种拒绝策略？默认哪种？
+
+1. AbortPolicy 队列满了，不处理抛出异常
+2. CallerRunsPolicy 哪来的去哪里，抛回原线程
+3. DiscardPolicy 队列满丢掉，不会抛出异常
+4. DiscardOldestPolicy 队列满了，和第一个线程竞争，失败丢掉
+
+## 线程池参数几个？
+
+ThreadPoolExecutor 不要用 Executors创建，容易OOM
+
+1. 核心线程数
+2. 最大线程数 非核心+核心
+3. keepAliveTime
+4. 时间单位 TimeUnit.SECONDS
+5. 阻塞队列 ABQ<Runnable>(capacity: 5)
+   有界无界 
+   满了只能出队 空了只能入队 否则阻塞状态
+6. 线程工厂 这个没用过
+7. 拒绝策略
+
+![image-20200416163019725](/Users/hawkii/自学MD/面试img/image-20200416163019725.png)
+
+## 线程池计算问题
+
+30个任务，核心线程数5个，非核心线程数5个，队列10个，拒绝线程数10个。
+
+![img](https://mmbiz.qpic.cn/mmbiz_png/qhRZNwUg1HCJlr6YAapFWHTdy7RJvnCPwLNFs9d0EzCdt8W9MIzIBHPduKtogc4OEKencfeFzK7j2pJHYlbuEQ/640?wx_fmt=png&wxfrom=5&wx_lazy=1&wx_co=1)
+
+## 线程池实现机制？
+
+![image-20200416155859818](/Users/hawkii/自学MD/面试img/image-20200416155859818.png)
+
+线程池最常用 实际开发中 （类似于数据连接池）
+
+适用：
+要任务数量大
+单个任务处理时间短
+
+- 提前创造好多个线程，放到线程池中，用时获取，用完放回去。避免浪费，类似公交
+
+  优点：
+
+  提高响应速度
+
+  降低资源消耗
+
+  便于线程管理
+
+## 定时线程池
+
+```java
+ScheduledExecutorService pool = Executors.newScheduledThreadPool(10);
+MyRunnable myRunnable = new MyRunnable("thread-" + i);
+pool.schedule(myRunnable,5, TimeUnit.SECONDS);//延时5秒执行
+//pool.scheduleWithFixedDelay(myRunnable,5,5,TimeUnit.SECONDS);
+```
+
+## 线程池异常
+
+![img](/Users/hawkii/自学MD/面试img/v2-4a46342775c6f9ad8543654890833b6b_720w.jpg)
+
+![img](/Users/hawkii/自学MD/面试img/v2-e9cdd63bcf506164e3883ed864fab89b_720w.jpg)
+
+## ArrayBlockingQueue 和 LinkedBlockingQueue
+
+ArrayBlockingQueue：一个由数组构成有界阻塞队列
+
+LinkedBlockingQueue：一个由链表构成有界阻塞队列
+
+阻塞队列不可用时，提供以下四种处理方式：
+
+![img](/Users/hawkii/自学MD/面试img/v2-c74eeb60c59fc147bba73bd80d84ac44_b.jpg)
+
+## 多线程程序的优点：
+
+- 提高应用程序响应
+
+- 提高计算机系统CPU利用率
+
+- 改善程序结构，将既长又复杂进程分为多个线程，独立运行，方便理解修改
+
+
+## Future和FutureTask区别
+
+| 任务描述 | 执行器            | 任务       |
+| -------- | ----------------- | ---------- |
+| Future   | Executor          | Runnable   |
+|          | ExecutorService   | Callable   |
+|          | TreadPoolExecutor | FutureTask |
+
+Future接口，五个方法
+cancel()	isCancelled()	isDone()	
+get（）方法可以当任务结束后返回一个结果，如果调用时，工作还没有结束，则会阻塞线程，直到任务执行完毕get（long timeout,TimeUnit unit）做多等待timeout的时间就会返回结果
+
+无论是Runnable还是Callable对象，当提交到线程池后，均是被封装成一个FutureTask对象后执行FutureTask类，应用了Runnable和Future接口。
+.execute方法调用Worker线程，线程启动，调用线程的runWorker()方法，在runWorker()方法中最终会调用到task.run()方法
+
+## Thread下的方法和优先级：
+
+**Thread的方法**
+
+1. start() 启动当前线程，调用当前线程的run();
+2. run() 通常需要重写Thread类中此方法，将创建的线程要执行的操作写在此方法中
+3. currentThread() 静态方法，返回执行当前代码的线程
+4. yield() 释放当前cpu执行权
+5. join() 在线程a中调用b的join()方法，此时线程a进入阻塞状态，知道b执行完结束
+6. sleep(long millitime) 当前线程睡眠指定毫秒，在此之前线程处于阻塞状态
+7. isAlive 判断当前进程是否存活
+
+**Thread的优先级**
+优先级：
+MAX_PRIORITY = 10	//优先级高，优先运行权高，高概率被执行
+MIN_PRIORITY = 1
+NORM_PRIORITY = 5
+方法：
+getPrioirty();
+setPrioirty(int p);
+
+## 线程的生命周期
+
+新建 就绪 运行 阻塞 死亡
+
+新建 + start() = 就绪
+运行 + 执行完run()/调用stop()/出现Error/Exception但不处理 = 死亡
+运行 + sleep(long time)/join()/等待同步锁/wait()/suspend() = 阻塞
+阻塞 + sleep()时间到/join()结束/获取同步锁/notify()、notifyAll()/resume() = 就绪
+
+## 线程死锁
+
+不同线程分别占用对方需要同步资源不放弃，都在等自己需要的同步资源
+
+出现死锁后，不会报异常，不会出现提示，只是所有进程在阻塞状态
+
+jstack调试工具可以解决
+
+## synchronized 和 lock/unlock区别
+
+lock需要手动启动同步，解锁也要手动实现
+
+synchronized机制执行完相应同步代码块，自动释放锁
+
+lock要写try/catch/finally，unlock
+
+建议首选 lock -> 同步代码块 -> 同步方法
+
+## 线程通信三种：
+
+wait() :一旦执行此方法，当前线程就进入阻塞状态，并释放同步监视器
+
+notify():一旦执行此方法，就会唤醒wait()的另一个进程，如果有多个，就唤醒优先级高的；
+
+notifyAll():一旦执行此方法，唤醒所有线程
+
+说明：
+
+1. 只能用在同步代码块或者同步方法中，不能是lock
+
+2. wait, notify, notifyAll 三个方法调用者必须是同步代码块或同步方法中的同步监视器，否则会出现异常
+
+3. wait, notify, notifyAll 不是定义在Thread类里面，而是Object里面
+
+## sleep和wait方法异同
+
+相同点：都可以让当前线程进入阻塞状态
+
+不同点：lock不能用wait
+
+|              |   sleep    |       wait       |
+| :----------: | :--------: | :--------------: |
+| 对象方法调用 | Thread调用 |    Object调用    |
+|   调用位置   |  任何位置  | 同步代码块或方法 |
+|   锁的释放   |   不释放   |       释放       |
+
+ 
+
+## start和run区别
+
+1. start、run层次不同
+2. 用start方法来启动线程，并没有运行，一旦得到cpu时间片，就开始执行run()方法
+3. 这里方法run()执行线程体，它包含了要执行的这个线程的内容，run方法运行结束，此线程随即终止
+
+start方法可启动多线程
+run方法只是thread的一个普通方法调用执行，是不会开启多线程的
+
+## i++是线程安全的吗？
+
+局部变量肯定是线程安全的
+成员变量多个线程共享时，就线程不安全的。
+
+## 你对锁和共享数据的理解及各自要求
+
+锁：任何一个类的对象可以充当锁，多个线程公用一把锁
+
+共享数据：多个线程共同操作数据，即为共享数据。需要使用同步机制将操作共享数据代码包起来，不能包多了，也不能包少了。
+
+## CompletableFuture，这个是JDK1.8里的新特性，通过它怎么实现多线程并发控制？Future 和 FutureTask
+
+```java
+//ExecutorService新建线程池，新建一个操作（类，如果要返回值Callable否则Runnable）
+ExecutorService executor = Executors.newFixedThreadPool(3);
+//T是上面操作给的泛型
+Future<String> future = executor.submit(task); 
+String html = future.get();
+executor.shutdown(); 
+```
+
+Future异步操作方案：.get()会造成阻塞，while + .isDone()来判断是否释放。
+
+[素材源头，廖雪峰Future](https://www.bilibili.com/video/av54953654?p=16)
+
+## callable为什么runnable多线程强大
+
+1. call可以返回值
+
+2. callable是支持泛型的
+
+3. call可以抛出异常，被外面的操作捕获，获取异常的信息
+
+## fail-fast和CopyOnWriteArrayList
+
+**fail-fast** 机制是java集合(Collection)中的一种错误机制。当多个线程对同一个集合的内容进行操作时，就可能会产生fail-fast事件
+
+以List为例，多个线程同时操作一个List报ConcurrentModification异常。
+
+可以使用CopyOnWriteArrayList，多个线程获取同一个资源，只在修改时复制副本，并将地址返回。
+用到ReentrantLock重入锁（可以递归），可重写COWMap。
+
+适用场景，读多写少场景，比如白名单、黑名单、产品目录。
+
+**fail-safe**：出现同时修改异常，备份数据，继续执行，所以叫safe。
+
+# 锁相关问题
+
+## 悲观锁
+
+每次拿数据认为别人会修改，所以每次拿数据都上锁，**共享资源每次只给一个线程使用，其它线程阻塞，用完后再把资源转让给其它线程**。传统的关系型数据库里边就用到了很多这种锁机制，比如行锁，表锁等，读锁，写锁等，都是在做操作之前先上锁。Java中`synchronized`和ReentrantLock都是悲观锁
+
+适用多写
+
+## 乐观锁
+
+每次拿数据认为别人不修改，所以不上锁，但更新的时会判断在此期间别人是否更新该数据，可以使用**版本号机制**和**CAS算法**实现。**乐观锁适用于多读的应用类型，这样可以提高吞吐量**，像数据库提供的类似于**write_condition机制**，其实都是提供的乐观锁。原子变量类**AtomicStampedReference**就是使用了乐观锁的一种实现方式**CAS**实现的。
+
+适用多读
+
+乐观锁实现方法：
+
+1. 版本号机制，加一个ver字段+时间戳
+2. CAS算法
+
+```
+需要读写的内存值 V
+进行比较的值 A
+拟写入的新值 B
+当且仅当 V 的值等于 A时，CAS通过原子方式用新值B来更新V的值，否则不会执行任何操作（比较和替换是一个原子操作）。一般情况下是一个自旋操作，即不断的重试。
+```
+
+乐观锁的缺点：
+1 ABA问题，用AtomicStampedReference类可以解决
+2 循环时间开销大，CAS一直不成功影响CPU性能
+3 只能保证一个变量原子操作，多读场景用synchronized
+
+**总结**：
+
+1. 线程冲突轻，自旋容易成功，用CAS（CPU硬件实现，不用切线程）
+2. 线程冲突重，用synchronized，用CAS大概率失败
+
+## ConcurrentHashMap：
+
+**jdk1.7** 分段锁技术，Segment+HashEntry（volatile修饰value和next）
+
+Put方法：自旋获得锁，如果超过最大次数，改为阻塞锁获取。
+
+Get方法：直接定位Segment和HashEntry
+
+**jdk1.8** 采用了 `CAS + synchronized` 来保证并发安全性
+
+HashEntry变成Node。
+上锁前，操作都是基于volatile和CAS之上无锁且线程安全。
+
+**读取** **操作** **判断是否改变** **执行操作**，这是用了CAS思想。
+
+## 锁升级
+
+4种状态：**无锁**、**偏向锁**、**轻量级锁状**、**重量级锁（悲观锁）**
+
+没有任何线程访问时，它是可偏向的，只能有一个线程来访问它，当第一个线程来访时，它会偏向这个线程，此时，对象持有偏向锁偏向第一个线程。第二个线程访问，如果第一个线程结束，回到无锁和偏向状态，否则进入轻量级锁。
+
+轻量级锁，一个持有线程，一个自旋，又有第三个来访，则变成重量级锁。或者自旋超过某个次数。
+
+## volatile
+
+保证了不同线程对这个变量进行操作时的可见性，即一个线程修改了某个变量的值，这新值对其他线程来说是立即可见的。（**可见性**）
+禁止进行指令重排序。（**有序性**）
+volatile 只能保证对单次读/写的原子性。i++ 这种操作不能保证**原子性**。
+
+原子性：程序中操作要么全部完成,要么全部不完成,不可能停滞在中间某个环节，volatile 修饰的变量读写都有原子性
+
+可见性，有序性：两个一起说，happens-before关系来保障可见性描述有序性。java内存模型的动作包括读/写，锁的申请与释放，线程的启动等待释放。这些动作就是用来保障h-b特性。假设A和B之间存在happen-before 关系，那么java 内存模型保证A的操作结果对B可见。在这里我解释以下为什么能从可见性来描述有序性呢？因为A，B线程中 A先于B线程执行，然后线程B能够看到线程A的执行过程的结果，就默认 线程A的执行时具有有序性的，不管线程A中他的执行顺序是如何。
+
+## AQS
+
+**AbstractQueuedSynchronizer，抽象队列同步器**
+
+JUC一个核心组件，有state变量、加锁线程、等待队列等核心，维护了加锁状态。
+
+# 并发编程
+
+## 现在有 T1、T2、T3 三个线程，你怎样保证 T2 在 T1 执行完后执行，T3 在 T2 执行完后执 行？
+
+```java
+T1.start();
+T1.join();
+T2.start();
+T2.join();
+T3.start();
+T3.join();
+```
+
+## 在 Java 中 Lock 接口比 synchronized 块的优势是什么？
+
+1. ReentrantLock提供了更多，时间锁等候，可中断锁等候，锁投票。
+
+2. ReentrantLock还提供了条件Condition，在多个条件变量和高度竞争锁的地方，ReentrantLock更加适合
+
+3. ReentrantLock提供了可轮询的锁请求，不易死锁。
+
+4. ReentrantLock支持更加灵活的同步代码块，相比synchronized。ReentrantLock的锁释放一定要在finally中处理，否则可能会产生严重的后果。
+
+5. ReentrantLock支持中断处理，性能较synchronized会好些。
+
+## 用 Java 写代码来解决生产者——消费者问题?
+
+线程池+ABQ，生产者和消费者共享一个缓存区，生产者put进队列，消费者处理掉了。
+
+## 用 Java 编程一个会导致死锁的程序，你将怎么解决？
+
+
+
+
+
+## 为什么我们调用 start()方法时会执行 run()方法，为什么我们不能直接调用 run()方法？
+
+new一个Thread，线程新建状态; 调用start()方法，启动线程并进入就绪状态。 start() 执行线程准备工作，然后自动执行 run() 方法的内容，真多线程工作。 直接执行 run() 方法，会把 run 方法当成一个 main 线程下的普通方法去执行，假多线程
+
+## Java 中你怎样唤醒一个阻塞的线程？
+
+join() notify() wait()
+
+## 在 Java 中 CycliBarriar 和 CountdownLatch 有什么区别？
+
+CyclicBarrier可以重复使用已经通过的障碍，而 CountdownLatch不能重复使用。
+
+## 什么是不可变对象，它对写并发应用有什么帮助？
+
+不可变对象，比如String，比如final修饰的对象。
+天生线程安全的，阅读代码锚点不变，易于缓存。
+
+## 你在多线程环境中遇到的常见的问题是什么？
+
+多线程和并发程序中常遇到的有竞争条件、死锁、饥饿。
+
+饥饿：线程因无法访问所需资源而无法执行下去的情况
+
+竞争条件：当两个或以上的线程对同一个数据进行操作的时候,可能会产生“竞争条件”的现象
+
+# SpringMVC
+
+69 解释下SpringMVC
+
+![img](https://ss1.bdstatic.com/70cFvXSh_Q1YnxGkpoWK1HF6hhy/it/u=859978010,3262158413&fm=26&gp=0.jpg)
+
+request-->DispatcherServlet -->HandlerMapping记录Controller与路径关系
+
+> ViewResolver 根据视图名称确定视图组件
+>
+> ModelAndView 1 返回到指定页面setName()+字符串 2 返回参数 addObject()方法到请求作用域中
+>
+> Controller	页面控制器，着力编写**业务层** service层 **数据访问层**dao层 前者new一个dao对象 操作它。
+
+最后通过视图组件jsp或者html返回response。
+
+**SpringMVC：**
+
+1.客户端发送请求到DispacherServlet（分发器）
+
+2.由DispacherServlet控制器查询HandlerMapping，找到处理请求的Controller
+
+3.Controller调用业务逻辑处理后，返回ModelAndView
+
+4.DispacherServlet查询视图解析器，找到ModelAndView指定的视图
+
+5.视图负责将结果显示到客户端
+
+# Mybatis
+
+## 什么是Mybatis？
+
+1、Mybatis 是一个**半ORM框架**，它内部**封装JDBC**，开发时**只关注 SQL** 语句本身
+不需要花费精力去处理加载驱动、创建连接、创建statement 等繁杂的过程。程序员直接**编写原生态 sql**，可以严格**控制执行性能**， 灵活度高。
+
+2、使用 **XML** 或**注解**来配置和映射原生信息， 将 **POJO 映射**成**数据库记录**
+避免了几乎所有的 JDBC 代码和手动设置参数以及获取结果集。
+
+3、通过 **XML** 或**注解**的方式配置**statement** ， 并通过**java 对象**和 **statement 中 sql 的动态参数**进行映射成 **sql 语句**，最后由 mybatis 框架执行 sql 并将结果映射为 java 对象并返回。
+
+## Mybaits 的优点：
+
+1、SQL 编程，相当灵活，不会对程序或者数据库的设计造成任何影响，SQL 写在 XML 里，解除 sql 与程序的耦合，便于管理；提供 XML 标签， 编写动态 SQL 语句， 并可重用。
+
+2、消除了 JDBC 大量冗余的代码，不用手动开关连接；
+
+3、与多种数据库兼容，MyBatis 使用 JDBC 来连接数据库，所以只要JDBC 支持的数据库 MyBatis 都支持）。
+
+4、Spring 很好集成；
+
+5、提供映射标签， 支持对象与数据库的 ORM 字段关系映射；提供对象与关系映射标签， 支持对象关系组件维护。
+
+## MyBatis 框架的缺点：
+
+1、SQL 编写量大， 当字段多、关联表多时， 编写SQL 要求高
+
+2、SQL 语句依赖于数据库， 导致数据库移植性差， 不能随意更换数据库。
+
+## MyBatis 框架适用场合：
+
+1、MyBatis 专注于 SQL 本身， 是一个足够灵活的 DAO 层解决方案。
+
+2、对性能的要求很高，或者需求变化较多的项目，如互联网项目， MyBatis 将是不错的选择。
+
+## #{}和${}的区别是什么？
+
+**#{}是预编译处理， ${}是占位符替换。**
+
+Mybatis 在处理 #{} 时，就是把 {} 中 替换为字符串（加双引号），调用 PreparedStatement 的set 方法来赋值；
+
+Mybatis 在处理 ${} 时，就是把 {} 中替换成变量的值。占位符
+
+使用 #{} 可以有效的防止 SQL 注入， 提高系统安全性。
+
+## 当实体类中的属性名和表中的字段名不一样 ，怎么办 ？
+
+第 1 种：通过在查询的 sql 语句中定义字段名的别名， 让字段名的别名和实体类的属性名一致。
+
+```xml
+<select id=”selectorder”  parametertype=”int”  resulttype=” me.gacl.domain.order”>
+		select order_id id, order_no orderno ,order_price price form orders where order_id=#{id};
+</select>
+```
+
+第 2 种：通过来映射字段名和实体类属性名的一一对应的关系。
+
+```xml
+<select id="getOrder" parameterType="int" resultMap="orderresultmap">
+		select * from orders where order_id=#{id}
+</select>
+<resultMap type=”me.gacl.domain.order”  id=”orderresultmap”>
+    <!–用 id 属性来映射主键字段–>
+    <id property=”id”  column=”order_id”>
+    <!–用 result 属性来映射非主键字段，property 为实体类属性名，column 为数据表中的属性–>
+    <result property =  “orderno”  column =”order_no”/>
+    <result property=”price”  column=”order_price”  />
+</reslutMap>
+```
+
+## Mybatis 的一级、二级缓存:
+
+1）  一级缓存: 基于 PerpetualCache 的 HashMap 本地缓存， 其存储作用域为Session， 当 Session flush  或  close  之后， 该  Session  中的所有  Cache  就将清空， 默认打开一级缓存。
+
+2） 二级缓存与一级缓存其机制相同，默认也是采用 PerpetualCache，HashMap 存储， 不同在于其存储作用域为 Mapper(Namespace)， 并且可自定义存储源， 如 Ehcache。
+
+setting cacheEnabled 值设为true
+在sql语句中用flushCache或者useCache避免脏读
+
+默认不打开二级缓存， 要开启二级缓存， 使用二级缓存属性类需要实现 Serializable 序列化接口(可用来保存对象的状态),可在它的映射文件中配置
+
+3）  对于缓存数据更新机制， 当某一个作用域(一级缓存 Session/二级缓存 Namespaces)的进行了 C/U/D 操作后，默认该作用域下所有 select 中的缓存将被 clear 。
+
+## Mapper 配置有哪几种方式？
+
+第一种：接口实现类继承 SqlSessionDaoSupport：使用此种方法需要编写mapper 接口， mapper 接口实现类、mapper.xml 文件。
+
+1、在 sqlMapConfig.xml 中配置 mapper.xml 的位置
+
+```xml
+<mappers>
+<mapper resource="mapper.xml 文件的地址" />
+<mapper resource="mapper.xml 文件的地址" />
+</mappers>
+```
+
+2、定义 mapper 接口
+
+3、实现类集成 SqlSessionDaoSupport
+
+mapper 方法中可以  this.getSqlSession()进行数据增删改查。
+
+4、spring 配置
+
+```xml
+<bean id=" " class="mapper 接口的实现">
+<property name="sqlSessionFactory" ref="sqlSessionFactory"></property>
+</bean>
+```
+
+第二种：使用 org.mybatis.spring.mapper.MapperFactoryBean：
+
+1、在 sqlMapConfig.xml 中配置 mapper.xml 的位置， 如果 mapper.xml 和mapper接口的名称相同且在同一个目录， 这里可以不用配置
+
+```xml
+<mappers>
+<mapper resource="mapper.xml 文件的地址" />
+<mapper resource="mapper.xml 文件的地址" />
+</mappers>
+```
+
+2、定义 mapper 接口：
+
+- mapper.xml 中的 namespace 为 mapper 接口的地址
+
+- mapper 接口中的方法名和 mapper.xml 中的定义的 statement 的 id 保持一致
+
+- Spring 中定义
+
+```xml
+<bean id="" class="org.mybatis.spring.mapper.MapperFactoryBean">
+<property name="mapperInterface" value="mapper 接口地址" />
+<property name="sqlSessionFactory" ref="sqlSessionFactory" />
+</bean>
+```
+
+第三种：使用 mapper 扫描器：
+
+1、mapper.xml 文件编写：
+
+mapper.xml 中的 namespace 为 mapper 接口的地址；
+
+mapper 接口中的方法名和 mapper.xml 中的定义的 statement 的 id 保持一致；
+
+如果将 mapper.xml 和 mapper 接口的名称保持一致则不用在 sqlMapConfig.xml 中进行配置。
+
+2、定义 mapper 接口：
+
+注意 mapper.xml 的文件名和 mapper 的接口名称保持一致， 且放在同一个目录
+
+3、配置 mapper 扫描器：
+
+```xml
+<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+<property name="basePackage" value="mapper 接口包地址"></property>
+<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>
+</bean>
+```
+
+4、使用扫描器后从 spring 容器中获取 mapper 的实现对象。
+
+## 什么是 MyBatis 的接口绑定？有哪些实现方式？
+
+接口绑定，就是在 MyBatis 中任意定义接口,然后把接口里面的方法和 SQL 语句绑定, 我们直接调用接口方法就可以,这样比起原来了 SqlSession 提供的方法我们可以有更加灵活的选择和设置。
+
+接口绑定有两种实现方式,
+一种是通过注解绑定， @Select、@Update 等注解， 注解包含 Sql 语句；
+另外一种就是通过 xml 里面写 SQL 来绑定, 在这种情况下,要指定 xml 映射文件里面的 namespace 必须为接口的全路径名，id值是方法名。SQL 简单时,用注解绑定, SQL 复杂时,用 xml 绑定,一般用 xml 绑定的比较多。
+
+## 使用 MyBatis 的mapper 接口调用时有哪些要求？
+
+四大相同
+
+|  Mapper接口  |      mapper.xml       |
+| :----------: | :-------------------: |
+|    方法名    |        sql的id        |
+| 输入参数类型 | parameterType类型相同 |
+| 输出参数类型 |  resultType类型相同   |
+|   文件路径   | mapper标签的namespace |
+
+## 通常一个Xml 映射文件，都会写一个Dao 接口与之对应，请问，这个Dao 接口的工作原理是什么？Dao 接口里的方法， 参数不同时，方法能重载吗？
+
+Dao 接口即 Mapper 接口。接口的全限名，就是映射文件中的 namespace 的值；接口的方法名， 就是映射文件中 Mapper 的 Statement 的 id 值；接口方法内的参数， 就是传递给 sql 的参数.
+
+Mapper 接口是**没有实现类**的，当调用接口方法时，接口全限名+方法名拼接字符串作为 key 值， 可唯一定位一个 MapperStatement。在 Mybatis 中， 每一个
+select、insert 、update、delete标签，  都会被解析为一个MapperStatement 对象.
+举例：com.mybatis3.mappers.StudentDao.findStudentById， 可以唯一 找 到 namespace 为 com.mybatis3.mappers.StudentDao 下 面 id 为findStudentById 的 MapperStatement 。
+Mapper 接口里的方法，是不能重载的，因为是使用 全限名+方法名的保存和寻找策略。Mapper 接口的工作原理是 JDK 动态代理， Mybatis 运行时会使用 JDK 动态代理为 Mapper 接口生成代理对象 proxy， 代理对象会拦截接口方法， 转而执行 MapperStatement 所代表的 sql， 然后将 sql 执行结果返回。
+
+## MyBatis 实现一对一、一对多、多对多？
+
+有联合查询和嵌套查询
+
+联合查询是几个表联合查询,只查询一次, 通过在resultMap 里面配置 association 节点配置一对一的类就可以完成；
+
+```xml
+<!--	建立表和实体类之间映射-->                                                           
+	<resultMap id="menuMap" type="Menu">                                         
+		<id column="id" property="id"></id>                                      
+		<result column="name" property="name"></result>                          
+		<result column="price" property="price"></result>                        
+		<result column="flavor" property="flavor"></result>                      
+		<association property="type"                                             
+			select="com.southwind.repository.TypeRepository.findById"            
+			column="tid">                                                        
+		</association>                                                           
+	</resultMap>                                                                     
+```
+
+嵌套查询是先查一个表，根据这个表里面的结果的 外键 id，去再另外一个表里面查询数据,也是通过 association 配置，但另外一个表的查询通过 select 属性配置。
+
+## Mybatis 是否支持延迟加载？如果支持，它的实现原理是什么？
+
+答：Mybatis 仅支持 association 关联对象和 collection 关联集合对象的延迟加载， association 指的就是一对一， collection 指的就是一对多查询。在 Mybatis 配置文件中， 可以配置是否启用延迟加载  lazyLoadingEnabled=true|false。
+
+它的原理是， 使用 CGLIB 创建目标对象的代理对象， 当调用目标方法时， 进入拦截器方法， 比如调用 a.getB().getName()， 拦截器 invoke()方法发现 a.getB()是null 值， 那么就会单独发送事先保存好的查询关联 B 对象的 sql， 把 B 查询上来， 然后调用 a.setB(b)，于是 a 的对象 b 属性就有值了，接着完成 a.getB().getName()方法的调用。这就是延迟加载的基本原理。
+
+当然了， 不光是 Mybatis， 几乎所有的包括 Hibernate， 支持延迟加载的原理都是一样的。
+
+## Mybatis 动态sql 有什么用？执行原理？有哪些动态sql？
+
+Mybatis 动态 sql 可以在 Xml 映射文件内，以标签的形式编写动态 sql，执行原理是根据表达式的值 完成逻辑判断并动态拼接 sql 的功能。
+
+## Xml 映射文件中，除了常见的 select|insert|updae|delete 标签之外，还有哪些标签？
+
+答：Mybatis 提供了 9 种动态 sql 标签：trim | where | set | foreach | if | choose
+
+| when | otherwise | bind ， 加上动态 sql 的 9 个标签， 其中为 sql 片段标签， 通过
+
+标签引入  sql  片段，为不支持自增的主键生成策略标签。
+
+## Mybatis 的 Xml 映射文件中， 不同的 Xml 映射文件， id 是否可以重复？
+
+不同的 Xml 映射文件， 如果配置了 namespace， 那么 id 可以重复；如果没有配置 namespace， 那么 id 不能重复；原因就是 namespace+id 是作为 Map的 key 使用的， 如果没有 namespace， 就剩下 id， 那么， id 重复会导致数据互相覆盖。有了 namespace，自然 id 就可以重复，namespace 不同，namespace+id 自然也就不同。
+
+## Mybatis 是如何将sql 执行结果封装为目标对象并返回的？都有哪些映射形式？
+
+第一种是使用标签， 逐一定义数据库列名和对象属性名之间的映射关系。
+
+第二种是使用 sql 列的别名功能， 将列的别名书写为对象属性名。
+
+有了列名与属性名的映射关系后， Mybatis 通过反射创建对象， 同时使用反射给对象的属性逐一赋值并返回， 那些找不到映射关系的属性， 是无法完成赋值的。
+
+## 如何获取自动生成的(主)键值?
+
+insert 方法总是返回一个 int 值 ， 这个值代表的是插入的行数。
+
+如果采用自增长策略，自动生成的键值在 insert 方法执行完后可以被设置到传入的参数对象中。
+
+示例：
+
+```xml
+<insert id=”insertname”  usegeneratedkeys=”true”  keyproperty=” id”> 
+	insert into names (name) values (#{name})
+</insert>
+```
+
+```java
+name name = new name(); name.setname(“fred”);
+int rows = mapper.insertname(name);
+// 完成后,id 已经被设置到对象中system.out.println(“rows inserted =  ”  + rows);
+system.out.println(“generated key value =  ”  + name.getid());
+```
+
+## 在 mapper 中如何传递多个参数?
+
+1、第一种：DAO 层的函数
+
+public UserselectUser(String name,String area);
+
+对应的 xml,#{0}代表接收的是 dao 层中的第一个参数，#{1}代表 dao 层中第二参数，更多参数一致往后加即可。
+
+```xml
+<select id="selectUser"resultMap="BaseResultMap"> select * fromuser_user_t whereuser_name = #{0} and user_area=#{1}
+</select>
+```
+
+2、第二种：使用 @param 注解:
+
+```java
+public interface usermapper {
+user selectuser(@param(“username”) string username,@param(“hashedpassword”) string hashedpassword);
+}
+```
+
+然后,就可以在 xml 像下面这样使用(推荐封装为一个 map,作为单个参数传递给mapper):
+
+```xml
+<select id=”selectuser”  resulttype=”user”> select id, username, hashedpassword from some_table
+where username = #{username}
+and hashedpassword = #{hashedpassword}
+</select>
+```
+
+3、第三种：多个参数封装成 map
+
+```java
+try {
+//映射文件的命名空间.SQL 片段的 ID，就可以调用对应的映射文件中的
+SQL
+//由于我们的参数超过了两个，而方法中只有一个 Object 参数收集，因此我们使用 Map 集合来装载我们的参数
+Map < String, Object > map = new HashMap(); map.put("start", start);
+map.put("end", end);
+return sqlSession.selectList("StudentID.pagination", map);
+} catch (Exception e) { e.printStackTrace(); sqlSession.rollback(); throw e;
+} finally {
+MybatisUtil.closeSqlSession();
+}
+```
+
+sqlsession 线程不安全
+
+## MyBatis延迟加载
+
+**减少 Java 应⽤用与数据库的交互次数**延迟加载也叫懒加载、惰性加载，使⽤延迟加载可以提⾼高程序的运行效率，针对于数据持久层的操作， 在某些情况下可以不访问某些表，一定程度上减少了了 Java 应⽤用与数据库的交互次数。
+
+>查询学⽣生和班级的时，学⽣生和班级是两张不不同的表，如果当前需求只需要获取学⽣生的信息，那么查询学
+>⽣生单表即可，如果需要通过学⽣获取对应的班级信息，则必须查询两张表。
+>不同的业务需求，需要查询不同的表，根据具体的业务需求来动态减少数据表查询的⼯工作就是延迟加载。
+
+在 config.xml 中开启延迟加载
+
+将级联查询sql语句拆分成两个不同sql语句，对应两个不同方法。
+
+**Mybatis优化**：**MyBatis** 缓存 什什么是 MyBatis 缓存
+
+使⽤用缓存可以**减少 Java 应⽤用与数据库的交互次数**，直接从缓存中取出对象即可， ⽆无需再次访问数据库。
+
+MyBatis 缓存分类
+1、一级缓存:SqlSession 级别，默认开启不能关闭。
+
+2、⼆级缓存:Mapper 级别，默认关闭，可以开启。多个 SqlSession 使⽤同⼀个缓存。可以用Mybatis自带缓存，也可以使用第三方。
+**Mybatis动态SQL语句**
+使用动态sql语句可以减少代码开发，程序自动通过业务逻辑
+
+1. where和if标签
+
+```xml
+<select id="findByAccount" parameterType="com.southwind.entity.Account" resultType="com.southwind.entity.Account">
+  select * from t_account
+  <where>
+    <if test="id!=0">
+      id = #{id}
+    </if>
+    <if test="username!=null">
+      and username = #{username}
+    </if>
+    <if test="password!=null">
+      and password = #{password}
+    </if>
+    <if test="age!=0">
+      and age = #{age}
+    </if>
+  </where>
+</select>
+```
+
+2. choose和when标签
+3. trim标签中的prefix和suffix都会被用于标签内部的拼接
+4. foreach标签可以生成一系列值，主要用于生成sql的in语句
+
+---
+
+46 Mybatis笔记及如何优化
+ORMapping: Object Relationship Mapping 对象关系映射 对象指⾯向对象
+关系指关系型数据库
+Java 到 MySQL 的映射，开发者可以以⾯向对象的思想来管理数据库。
+
+- config.xml
+
+配置Mybatis综合信息。
+
+environments对应一个schema，可以配置多个schema。DataSource标签配置数据连接池，包括账户密码、驱动包和url等。
+
+Mappers配置其他sql语句关联的xml文件，几个类或者接口，几个xml。
+
+**通过 Mapper 代理理实现⾃定义接⼝**业务中最为常用的创造实体类方法。sqlSession.getMapper
+
+```java
+AccountRepository accountRepository = sqlSession.getMapper(AccountRepository.class);
+```
+
+增删改查分别对应接口不同方法。尤其是查，往往存在多个方法，按id，按名字，按学号等等。
+同时int类型往往还需要复写Integer包装类。
+
+此外，如果多个表关联查询，比如同时查学号和班级。需要用resultMap间接映射，此时不能直接映射。
+
+```xml
+<resultMap id="studentMap" type="com.southwind.entity.Student">
+  <id column="id" property="id"></id>
+  <result column="name" property="name"></result>
+  <association property="classes" javaType="com.southwind.entity.Classes">
+    <id column="cid" property="id"></id>
+    <result column="cname" property="name"></result>
+  </association>
+</resultMap>
+<select id="findById" parameterType="long" resultMap="studentMap">
+  select s.id,s.name,c.id as cid,c.name as cname from student s,classes c where s.id = #{id} and s.cid = c.id
+</select>
+```
+
+**多对多关系**：两张主表 一张从表 （包含被两个主表约束的外键）
+
+|  id  | cid  | gid  |
+| :--: | :--: | :--: |
+|  1   |  1   |  1   |
+|  2   |  1   |  3   |
+|  22  |      |  2   |
+
+```xml
+<select id="findById" parameterType="long" resultMap="customerMap">
+	select c.id cid,c.name cname,g.id gid,g.name gname from customer c,goods g,customer_goods cg           		where c.id = #{id} and cg.cid = c.id and cg.gid = g.id
+</select>
+```
+
+|                 nginx                 |       apache httpd       |
+| :-----------------------------------: | :----------------------: |
+|    支持异步功能，不过是阻塞性异步     |       非阻塞性异步       |
+|               体量很小                |          体量大          |
+| 消耗资源少，抗并发能力强，3倍于apache | 消耗资源多，抗并发能力弱 |
+|      反向代理负载均衡，静态服务       |        静态+动态         |
+|              HTTP Server              |       HTTP Server        |
+
+|            nginx             |                    tomcat                     |
+| :--------------------------: | :-------------------------------------------: |
+|         HTTP Server          |        Application Server/Servlet 容器        |
+| 反向代理(负载均衡)，静态服务 | 动态内容转静态内容，通过HTTP Server转发客户端 |
+
+# JVM
+
+## 内存模型以及分区，需要详细到每个区放什么。
+
+JVM 分为堆区和栈区，还有方法区，初始化的对象放在堆里面，引用放在栈里面，
+
+class 类信息常量池（static 常量和 static 变量）等放在方法区:
+
+方法区：主要是存储类信息，常量池（static 常量和 static 变量），编译后的代码（字节码）等数据
+
+堆：初始化的对象，成员变量 （那种非 static 的变量），所有的对象实例和数组都要在堆上分配
+
+栈：栈的结构是栈帧组成的，调用一个方法就压入一帧，帧上面存储局部变量表，操作数栈，方法出口等信息，局部变量表存放的是 8 大基础类型加上一个应用类型，所以还是一个指向地址的指针
+
+本地方法栈：主要为 Native 方法服务
+
+程序计数器：记录当前线程执行的行号
+
+每个线程有自己独立程序计数器和运行栈，但是一个进程中不同线程共同使用一套堆和方法区，多线程操作公共系统资源是线程安全
+
+## 堆里面的分区：Eden，survival （from+ to），老年代，各自的特点。
+
+堆里面分为新生代和老生代（java8 取消了永久代，采用了 Metaspace），新生代包
+
+含 Eden+Survivor 区，survivor 区里面分为 from 和 to 区，内存回收时，如果用的是复制算法，从 from 复制到 to，当经过一次或者多次 GC 之后，存活下来的对象会被移动到老年区，当 JVM 内存不够用的时候，会触发 Full GC，清理 JVM 老年区当新生区满了之后会触发 YGC,先把存活的对象放到其中一个 Survice区，然后进行垃圾清理。因为如果仅仅清理需要删除的对象，这样会导致内存碎片，因此一般会把 Eden 进行完全的清理，然后整理内存。那么下次 GC 的时候就会使用下一个 Survive，这样循环使用。如果有特别大的对象，新生代放不下，
+
+就会使用老年代的担保，直接放到老年代里面。因为 JVM 认为，一般大对象的存
+
+活时间一般比较久远。
+
+## GC 的两种判定方法：
+
+引用计数法：某处引用该对象就+1，如果失效-1，当为 0 就会回收但是 JVM 没有用这种方式，因为无法判定相互循环引用（A 引用 B,B 引用 A）的情况
+
+引用链法：通过一种 **GC ROOT 的对象**（方法区静态变量引用的对象等、static 变量）来判断，如果有一条链能够到达 GC ROOT 就说明，不能到达 GC ROOT 就说明可以回收，类似DFS
+
+## SafePoint 是什么
+
+比如 GC 的时候必须要等到 Java 线程都进入到 safepoint 的时候 VMThread 才能开始执行 GC
+
+1. 循环的末尾 (防止大循环的时候一直不进入 safepoint，而其他线程在等待它进入safepoint)
+2. 方法返回前
+3. 调用方法的 call 之后
+4. 抛出异常的位置
+
+## GC 收集器有哪些？CMS 收集器与 G1 收集器的特点。
+
+**并行收集器**：次要回收中使用多线程来执行
+
+**串行收集器**：串行收集器使用一个单独的线程进行收集，GC 时服务有停顿时间
+
+**CMS 收集器**是基于**标记—清除**算法实现的，经过多次标记才会被清除
+
+**G1收集器** 从整体来看是基于**标记-整理**算法实现的收集器，从局部（两个 Region 之间）上来看是基于复制算法实现的
+
+## Minor GC 与 Full GC 分别在什么时候发生？
+
+新生代内存不够用时候发生 Minor GC，JVM 内存不够的时候发生 Full GC
+
+## 几种常用的内存调试工具：jmap、jstack、jconsole、jhat
+
+jstack 可以看当前栈的情况解决死锁，jmap 查看内存，jhat 进行 dump 堆的信息
+
+mat（eclipse 的也要了解一下）
+
+memery analyzer 分析内存泄漏
+jstat 查看性能
+javap 反解析出汇编指令、本地变量表、异常表、映射表、常量池
+javac 当前字节码反编译生成汇编代码
+
+## JVM 内存分哪几个区，每个区的作用是什么?
+
+java 虚拟机主要分为以下一个区:
+
+**方法区：**
+
+1. 有时候也成为**永久代**，在该区内很少发生垃圾回收，但是并不代表不发生 GC，在这里
+
+进行的 GC 主要是对方法区里的常量池和对类型的卸载
+
+2、方法区主要用来存储已被虚拟机加载的类的信息、常量、静态变量和即时编译器编译后
+
+的代码等数据。该区域是被线程共享的。
+
+3、方法区里有一个运行时常量池，用于存放静态编译产生的字面量和符号引用。该常量池
+
+具有动态性，也就是说常量并不一定是编译时确定，运行时生成的常量也会存在这个常量池中。
+
+**虚拟机栈:**
+
+1、虚拟机栈也就是我们平常所称的**栈内存**,它为 java 方法服务，每个方法在执行的时候都会创建一个栈帧，用于存储局部变量表、操作数栈、动态链接和方法出口等信息。
+
+虚拟机栈是线程私有的，它的生命周期与线程相同。
+
+2、局部变量表里存储的是基本数据类型、returnAddress 类型（指向一条字节码指令的地
+
+址）和对象引用，这个对象引用有可能是指向对象起始地址的一个指针，也有可能是代表对象的句柄或者与对象相关联的位置。局部变量所需的内存空间在编译器间确定
+
+4.操作数栈的作用主要用来存储运算结果以及运算的操作数，它不同于局部变量表通过索引来访问，而是压栈和出栈的方式
+
+5.每个栈帧都包含一个指向运行时常量池中该栈帧所属方法的引用，持有这个引用是为了支持方法调用过程中的动态连接.动态链接就是将常量池中的符号引用在运行期转化为直接引用。
+
+**本地方法栈**本地方法栈和虚拟机栈类似，只不过本地方法栈为 Native 方法服务。
+
+**堆**java 堆是所有线程所共享的一块内存，在虚拟机启动时创建，几乎所有的对象实例都在这里创建，因此该区域经常发生垃圾回收操作。
+
+**程序计数器**
+
+内存空间小，字节码解释器工作时通过改变这个计数值可以选取下一条需要执行的字节码指令，分支、循环、跳转、异常处理和线程恢复等功能都需要依赖这个计数器完成。该内
+
+存区域是唯一一个 java 虚拟机规范没有规定任何 OOM 情况的区域。
+
+**12.如和判断一个对象是否存活?(或者 GC 对象的判定方法**
+
+判断一个对象是否存活有两种方法:
+
+1. 
+
+ 虚拟机栈中引用的对象
+
+ 方法区类静态属性引用的对象
+
+ 方法区常量池引用的对象
+
+ 本地方法栈 JNI 引用的对象
+
+虽然这些算法可以判定一个对象是否能被回收，但是当满足上述条件时，一个对象比不一 
+
+**定会被回收**。当一个对象不可达 GC Root 时，这个对象并
+
+**不会立马被回收**，而是出于一个死缓的阶段，若要被真正的回收需要经历两次标记
+
+如果对象在可达性分析中没有与 GC Root 的引用链，那么此时就会被第一次标记并且进行一次筛选，筛选的条件是是否有必要执行 finalize()方法。当对象没有覆盖 finalize()方法或者已被虚拟机调用过，那么就认为是没必要的。
+
+如果该对象有必要执行 finalize()方法，那么这个对象将会放在一个称为 F-Queue 的对队列中，虚拟机会触发一个 Finalize()线程去执行，此线程是低优先级的，并且虚拟机不会承
+
+诺一直等待它运行完，这是因为如果 finalize()执行缓慢或者发生了死锁，那么就会造成 FQueue 队列一直等待，造成了内存回收系统的崩溃。GC 对处于 F-Queue 中的对象进行
+
+第二次被标记，这时，该对象将被移除”即将回收”集合，等待回收。
+
+## 13.简述 java 垃圾回收机制?
+
+在 java 中，程序员是不需要显示的去释放一个对象的内存的，而是由虚拟机自行执行。在JVM 中，有一个垃圾回收线程，它是低优先级的，在正常情况下是不会执行的，只有在虚拟机空闲或者当前堆内存不足时，才会触发执行，扫面那些没有被任何引用的对象，并将它们添加到要回收的集合中，进行回收。
+
+Java内存溢出
+
+|  8   |  1   |  1   | 20   |
+| :--: | :--: | :--: | ---- |
+| Eden | Old  |      |      |
+
+​						youngGC								15 次survive ====>
+
+## java 中垃圾收集的方法有哪些?
+
+1. 标记-清除：大量内存碎片
+
+2. 复制算法
+
+为了解决效率问题，复制算法将可用内存按容量划分为相等的两部分，然后每次只使用其中的一块，当一块内存用完时，就将还存活的对象复制到第二块内存上，然后一次性清楚完第一块内存，再将第二块上的对象复制到第一块。但是这种方式，内存的代价太高，每次基本上都要浪费一般的内存。
+
+将算法进行了改进，内存区域不再是按照 1：1 去划分，而是将内存划分为
+
+8:1:1 三部分，较大那份内存交 Eden 区，其余是两块较小的内存区叫 Survior 区。每次都会优先使用 Eden 区，若 Eden 区满，就将对象复制到第二块内存区上，然后清除 Eden 区，如果此时存活的对象太多，以至于 Survivor 不够时，会将这些对象通过分配担保机制复制到老年代中。(java 堆又分为新生代和老年代)
+
+3. 标记-整理
+
+解决内存碎片的问题；当对象存活率较高时，也解决了复制算法的效率问题。它的不同之处就是在清除对象的时候现将可回收对象移动到一端，清除掉端边界以外的对象，这样就不会产生内存碎片
+
+4. 分代收集
+
+## 15.java 内存模型
+
+java 内存模型(JMM)是线程间通信的控制机制.JMM 定义了主内存和线程之间抽象关系。线程之间的共享变量存储在主内存（main memory）中，每个线程都有一个私有的本地内存（local memory），本地内存中存储了该线程以读/写共享变量的副本。本地内存是JMM 的一个抽象概念，并不真实存在。它涵盖了缓存，写缓冲区，寄存器以及其他的硬件和编译器优化。Java 内存模型的抽象示意图如下：从上图来看，线程 A 与线程 B 之间如要通信的话，必须要经历下面 2 个步骤：
+
+1. 首先，线程 A 把本地内存 A 中更新过的共享变量刷新到主内存中去。
+
+    
+
+2. 然后，线程 B 到主内存中去读取线程 A 之前已更新过的共享变量。
+
+## java 类加载过程?
+
+加载、验证、准备、解析、初始化，然后是使用和卸载了
+
+通过全限定名来加载生成 class 对象到内存中，然后进行验证这个 class 文件，包括文件格式校验、元数据验证，字节码校验等。准备是对这个对象分配内存。解析是将符号引用转化为直接引用（指针引用），初始化就是开始执行构造器的代码
+
+---
+
+java 类加载需要经历以下 7 个过程：
+
+**加载**
+
+加载时类加载的第一个过程，在这个阶段，将完成以下三件事情：
+
+1. 通过一个类的全限定名获取该类的二进制流。
+
+    
+
+2. 将该二进制流中的静态存储结构转化为方法去运行时数据结构。
+
+    
+
+3. 在内存中生成该类的 Class 对象，作为该类的数据访问入口。
+
+**验证**
+
+验证的目的是为了确保 Class 文件的字节流中的信息危害到虚拟机.在该阶段主要完成
+
+以下四种验证:
+
+1. 文件格式验证：验证字节流是否符合 Class 文件的规范，如主次版本号是否在当前虚拟
+
+机范围内，常量池中的常量是否有不被支持的类型.
+
+  2、数据验证:对字节码描述的信息进行语义分析，如这个类是否有父类，是否集成了不
+
+被继承的类等。
+
+  3、字节码验证：是整个验证过程中最复杂的一个阶段，通过验证数据流和控制流的分析，
+
+确定程序语义是否正确，主要针对方法体的验证。如：方法中的类型转换是否正确，跳转
+
+指令是否正确等。4. 符号引用验证：这个动作在后面的解析过程中发生，主要是为了确保解析动作能正确执行。
+
+**准备**
+
+准备阶段是为类的静态变量分配内存并将其初始化为默认值，这些内存都将在方法区中进行分配。准备阶段不分配类中的实例变量的内存，实例变量将会在对象实例化时随着对象一起分配在 Java 堆中。
+
+public static int value=123;*//在准备阶段 value 初始值为 0 。在初始化阶段才会变 为 123 。**解析**该阶段主要完成符号引用到直接引用的转换动作。解析动作并不一定在初始化动作完成之前，也有可能在初始化之后。
+
+**初始化**
+
+初始化时类加载的最后一步，前面的类加载过程，除了在加载阶段用户应用程序可以通过自定义类加载器参与之外，其余动作完全由虚拟机主导和控制。到了初始化阶段，才真正开始执行类中定义的 Java 程序代码。
+
+## 17. 简述 java 类加载机制?
+
+虚拟机把描述类的数据从 Class 文件加载到内存，并对数据进行校验，解析和初始化，最终形成可以被虚拟机直接使用的 java 类型。
+
+## 什么是类加载器，类加载器有哪些?
+
+实现通过类的权限定名获取该类的二进制字节流的代码块叫做类加载器。
+
+主要有以下四种类加载器:
+
+1. 启动类加载器（Bootstrap ClassLoader）：用来加载 java 核心类库，无法被 java 程序直接
+
+引用，c++
+
+2. 扩展类加载器（extensions class loader）：加载 Java 的扩展库。Java 虚拟机的
+
+实现会提供一个扩展库目录。该类加载器在此目录里面查找并加载 Java 类。
+
+3. 系统类加载器（system class loader）：根据 Java 应用的类路径（CLASSPATH）
+
+来加载 Java 类
+
+4. 用户自定义类加载器，通过继承 java.lang.ClassLoader 类的方式实现。
+
+## 什么是双亲委派加载，有什么用处
+
+收到类加载请求，双亲委派机制，加载.class文件，委派给上一级类加载器，递归这个操作，别人不处理自己处理
+
+- 防止重复加载
+- 保证核心.class不能被篡改
+
+## 简述 java 内存分配与回收策率以及 Minor GC 和 Major GC
+
+1. 对象优先在堆的 Eden 区分配
+
+2. 大对象直接进入老年代
+
+3. 长期存活的对象将直接进入老年代.
+
+   当 Eden 区没有足够的空间进行分配时，虚拟机会执行一次 Minor GC.Minor Gc 通
+
+常发生在新生代的 Eden 区，在这个区的对象生存期短，往往发生 Gc 的频率较高，回收速度比较快;Full Gc/Major GC 发生在老年代，一般情况下，触发老年代 GC的时候不会触发 Minor GC,但是通过配置，可以在 Full GC 之前进行一次 MinorGC 这样可以加快老年代的回收速度。
+
+## 类初始化顺序
+
+1 静态变量 静态初始化块
+2 变量 初始化块
+3 构造器
+
+先父后子 2和3一起
+
+堆和栈
+
+1. 内存结构：栈（局部变量）、堆（new 出来的结构 对象（成员变量）数组等）
+
+2. 变量：成员变量 vs 局部变量 (方法内、方法形参、构造器内、构造器形参、代码块内)
+
+JVM里，new出来的对象是在哪个区？再深入一下，问下如何查看和优化JVM虚拟机内存。
+
+堆中
+
+## java对象的四种引用
+
+强引用 new一个object，无论如何不会被jvm的gc回收
+弱引用 只被弱引用的对象，每次jvm的gc都会回收它
+软引用 存在于第二次gc之前
+虚引用 没有真实引用，不存在对象整个生命周期 不被清除
+
+# 相似名词
+
+## 精度和粒度
+
+精度就是double里面精确程度，定点小数+指数部分，没有办法精确表示一个数
+
+粒度，锁的粒度，控制到那一句话 而不到那一部分
+
+## 抽象类和接口
+
+抽象类不能实例化自身，接口也不能实例化，只能实现。
+
+抽象类和接口区别：
+抽象类：对一类事物的抽象，规定属性和行为(可以写方法)，目的是复用
+接口：对某一行为抽象，只有声明，仅仅约束行为
+
+开发者继承抽象类是为了使用抽象类的属性和行为; 开发者实现接口只是为了使用接口的行为.
+
+“抽象级别（从高到低）：接口>抽象类>实现类”
+类都是单继承，但可以实现多个接口。
+
+抽象类里面的抽象方法必须全部被子类实现,如果子类不能全部实现,那么子类必须也是抽象类。接口里面的方法也必须全部被子类实现，如果子类不能实现那么子类必须是抽象类。
+
+抽象类里面可以没有抽象方法。
+
+- 接口和抽象类的概念不一样。接口是对动作的抽象，抽象类是对根源的抽象。
+
+抽象类表示的是，这个对象是什么。接口表示的是，这个对象能做什么。比如，男人，女人，这两个类（如果是类的话……），他们的抽象类是人。说明，他们都是人。
+
+人可以吃东西，狗也可以吃东西，你可以把“吃东西”定义成一个接口，然后让这些类去实现它.当你关注一个事物的本质的时候，用抽象类；当你关注一个操作的时候，用接口。
+
+
+
+程序是静态代码，进程是运行中的程序，线程是进程里面一条独立执行路径
+
+**什么是session、token、cookies**
+	1）最早web就是浏览静态文档图片，不用交互
+	2）记住会话，哪些人浏览网站、加了购物车，一个session id字段，服务端能分清楚谁是谁
+			但是多个服务器集群需要session存储记住所有人的id
+	3）token令牌，由服务器发给用户，用户访问时候将令牌和id一起传过来，通过Http header，SHA256算法验证签名和token，避免存储session
+	4）cookie 是浏览器里永久存储的数据，cookie由服务器生成，发送给浏览器，浏览器把cookie以kv形式保存到某个目录下的文本文件内，下一次请求同一网站时会把该cookie发送给服务器。由于cookie是存在客户端上的，所以浏览器加入了一些限制确保cookie不会被恶意使用
+
+**execute**与**executeUpdate**的相同点：都可以执行增加，删除，修改
+
+statement 对象的方法 传入sql的命令构成字符串 就能远程操作数据库
+
+不同点：
+
+1：
+execute**可以执行查询语句**
+然后通过getResultSet，把结果集取出来
+executeUpdate**不能执行查询语句**
+2:
+execute**返回boolean类型**，true表示执行的是查询语句，false表示执行的是insert,delete,update等等
+executeUpdate**返回的是int**，表示有多少条数据受到了影响
+
+try with resource ——可以自动关闭链接资源
+try(){
+
+}catch(){
+
+}
+
+1. ConnectionPool() 构造方法约定了这个连接池一共有多少连接
+
+2. 在init() 初始化方法中，创建了size条连接。 注意，这里不能使用try-with-resource这种自动关闭连接的方式，因为连接恰恰需要保持不关闭状态，供后续循环使用
+
+3. getConnection， 判断是否为空，如果是空的就wait等待，否则就借用一条连接出去
+
+4. returnConnection， 在使用完毕后，归还这个连接到连接池，并且在归还完毕后，调用notifyAll，通知那些等待的线程，有新的连接可以借用了。
+
+注：连接池设计用到了多线程的wait和notifyAll
+
+**并行：**多个cpu干多件事
+**并发：**一个cpu同时执行多个任务，秒杀等
+
+**方法重写：**子继承父	子重写覆盖父亲
+**方法重载：**相同方法名，有不同参数列表
+
+**Collection：**单列集合接口，有List和Set，定义一些规范
+**Collections：**是针对集合操作的工具类，操作Collection和Map的工具类，其中包含对集合进行排序和二分查找的方法
+
+**int与Integer 的区别？**
+int是Java语言提供的八种原始数据类型之一，当作为对象的属性的时候，默认值为0
+
+Integer是Java为int提供的包装类，默认值为null。
+
+int是基本类型,在使用的时候采用的是值传递。
+
+Integer采用的是引用传递。
+
+当往容器里存放整数的时候，无法直接存放int 而是将int类型转换为Integer存放。
+
+
+**URL和URI区别？**
+
+URI，是uniform resource identifier，统一资源标识符，用来唯一的标识一个资源。
+Web上可用的每种资源如HTML文档、图像、视频片段、程序等都是一个来URI来定位的
+
+URL是uniform resource locator，统一资源定位器，它是一种具体的URI，即URL可以用来标识一个资源，而且还指明了如何locate这个资源。
+URL是Internet上用来描述信息资源的字符串，主要用在各种客户程序和服务器程序上。采用URL可以用一种统一的格式来描述各种信息资源，包括文件、服务器的地址和目录等。回到Web上，假设所有的Html文档都有唯一的编号，记作html:xxxxx，xxxxx是一串数字，即Html文档的身份证号码，这个能唯一标识一个Html文档，那么这个号码就是一个URI。
+ 而URL则通过描述是哪个主机上哪个路径上的文件来唯一确定一个资源，也就是定位的方式来实现的URI。
+URL一般由三部组成：①协议(或称为服务方式)②存有该资源的主机IP地址(有时也包括端口号)③主机资源的具体地址。如目录和文件名等
+
+**throw和throws区别**
+1、throw代表动作，表示抛出一个异常的动作；throws代表一种状态，代表方法可能有异常抛出
+2、throw用在方法实现中，而throws用在方法声明中
+3、throw只能用于抛出一种异常，而throws可以抛出多个异常
+
+throws声明异常
+throw抛出异常
+try/catch/finally
+
+- 比较throw和throws区别
+
+- - throw：生成一个异常对象，并抛出。方法内部<-->自动抛出异常对象
+  - throws：处理异常方式，<--> try - catch - finally
+  - "上游排污，下游治污"
+
+**final  finally  finalize 的区别？**
+final：类 不能继承，方法 不能重写，变量 不能修改
+特：反射可以改变final性质
+
+finally try/catch语句块，无论如何被执行，除了几种特殊情况
+关闭资源，释放锁
+
+finalize()定义在java.lang.object中方法
+垃圾回收前调用，对象回收前释放资源
+每个finalize()只会被GC调用一次
+
+**Override 和Overload的区别是什么？Overload的方法是否可以改变返回值的类型？**
+Overload（重载）和Override（覆盖）是java多态性的不同表现，其中，重载是在一个类中多态性的一宗表现，是指在一个类中定义了多个同名的方法，它们或有不同的参数个数或有不同的参数类型。在使用重载时，需要注意:
+
+1重载时通过不同的方法参数来区分的，
+
+2 不能通过方法的访问权限，返回值类型和抛出的异常来进行重载。
+
+3对于继承类来说，如果基类方法的访问权限是private，那么就不能在派生类中对其进行重载，如果派生类也定义了一个同名函数，这只是一个新的方法，不会达到重载的作用。
+
+Override 是指派生类函数覆盖基类函数，覆盖一个方法并对其进行重写，以达到不同的作用。
+
+在使用覆盖的时候需要注意。
+
+派生类的覆盖方法必须和基类中的覆盖方法有相同的函数名和参数。
+
+派生类中的覆盖方法的返回值必须和基类中的被覆盖方法的返回值相同。
+
+派生类的覆盖方法所抛出的异常，必须和基类中被覆盖方法所抛出的异常一致或者是他的子类。
+
+重载与覆盖之间的区别主要有以下几个方面：
+
+1覆盖是子类和父类之间的关系，是垂直关系。重载时同一个类中方法之间的关系。是水平关系。
+
+覆盖只能由一个方法或只能由一对方法产生关系；方法的重载是多个方法之间的关系。
+
+覆盖要求参数类表相同，重载要求参数列表不同。
+
+覆盖关系中，调用方法体是根据对象的类型（对象对应的存储空间类型）来决定的；而重载关系是根据调用时的实际参数与形参列表来选择方法体的。
+
+如果一个类中定义的多个同名的方法，它们或有不同的参数个数或有不同的参数类型，则称为重载方法。Overload的方法是可以改变返回值的类型，但是Override 的方法不能改变返回值的类型。
+
+**Comparable与 Comparator的区别？**
+上面提到了Comparator排序，很多面试题里都问到 Comparable 与Comparator的区别。
+
+个人总结这两个接口之间的区别：  
+
+Comparable 是自然排序。让元素自身具备“比较性”。覆盖int compareTo(T o)方法。
+
+Comparator  是定制排序。提供一个比较器，一些集合调用比较器来比较集合中俩个元素。要覆盖int compare(T o1,T o2)方法。
+
+Comparable之所以称之“自然排序”是因为很多java.lang的常用类都实现了这个接口。
+
+基础数据类型包装类  排序规则 ：按他们对应数值的大小进行排序
+
+Character 按字符转换的Unicode数值进行排序。
+
+Boolean 中 true 对应的数值大于false对应的。
+
+String  按字符串转化成的Unicode数值进行排序。
+
+Date  Time 后面的时间比前面的时间大。
+
+TreeSet中两者的区别明显。
+
+**forward和redirect的区别是什么？**
+Forward是服务器内部的重定向，服务器直接访问目标地址的URL，把那个URL的响应内容读取过来，而客户端并不知道，因此，在客户端浏览器的地址栏里不会显示转向后的地址，还是原来的地址。由于整个定向的过程中用的是同一个Request，因此，forward会将Request的信息带到被定向的JSP或者是Servelet中使用。
+
+Redirect则是客户端重新定向，是完全的跳转，即客户端浏览器会获取跳转后的地址，然后重新发送请求，因此，浏览器中会显示跳转后的地址。同时由于这种方式比forward方式多了一次网络请求，所以，forward效率更高。
+
+**Synchronized和lock的区别？**
+Synchronized关键字，每个对象都有一个对象锁与之相关，该锁表明对象在任何时候只允许被一个线程拥有，当一个线程调用对象的一段synchronized代码时，首先需要获得这个锁，然后去执行相应的代码，执行结束后，释放锁。
+
+Synchronized关键字主要有两种用法， synchronized方法和synchronized块 此外关键字还可以作用于静态方法、类或某个实例，但这都对程序的效率有很大的影响。
+
+只要把多个线程访问资源的操作放在一个标记Synchronized的方法中，就能够保证这个方法在同一时间只能被一个线程来访问，从而保证了多线程访问的安全性。然而，当一个方法的方法体规模非常大的时候，把该方法声明为synchronized会大大影响程序的执行效率。为了提高程序的执行效率，java语言提供了synchronized块
+
+可以把任意代码段声明为synchronized，也可以指定上锁的对象，有非常高的灵活性。
+
+Jdk5新增加了lock接口以及它的一个实现类ReentranLock（重入锁）lock也可以用来实现多线程的同步，具体而言，它提供了如下的一些方法
+
+Lock()以阻塞的方式来获取锁，也就是说，如果获取了锁，则立即返回，如果其他线程持有锁，当前线程等待，直到获取锁后返回。
+
+Trylock()以非阻塞的方式来获取锁，只是尝试地去获取一下锁，如果获取到锁，则立即返回true，否则，立即返回false；
+
+Trylock（long timeout，timeunit unit）如果获取了锁，立即返回true 否则，会等待参数给定的时间单元，在等待的过程中，如果获取了锁，就返回true，如果等待超时，则返回false。
+
+Lockinterrupttibly()、如果获取了锁，则立即返回，如果没有获取锁，则当前线程处于休眠状态，直到获取锁，或者当前线程被其他线程中断。
+
+
+# Java基础
+
+三种遍历
+1 Iterator 迭代器方式
+2 增强for循环
+3 普通循环
+
+- iterator() 三个方法 指向Collection第一个元素前面的元素
+
+- - .hasNext()
+  - .next()
+  - .remove()
+
+- .super关键字作用
+
+- - 主要存在于子类方法中，用于指向子类对象中父类对象。
+  - 访问父类的属性
+  - 访问父类的函数
+  - 访问父类的构造函数
+
+- 什么是枚举类，枚举类对象声明修饰符有哪些？
+
+- - 枚举类：类中对象个数是有限的，不能再增加，
+  - 当用常量时候，建议用枚举类
+  - 如果枚举类只有一个对象，则可用单例模式实现方式
+  - 
+  - private final(no 错的)
+  - private static final(yes 是的）
+
+- 什么是元注解？说说Retention 和 Target 元注解作用
+
+- - 元注解：对现有注解进行解释说明的注解
+
+  - Retention： 指明所修饰的注解的生命周期，SOURCE CLASS（默认） RUNTIME
+
+    前提：要求此注解的元注解Retention中声明的生命周期状态为Runtime
+
+- dataType[] arr; 建议这么写
+
+- arr = new dataType[size];
+
+- str.toUpperCase(); 这个方法不改变str，返回值变大写
+
+- 克隆会产生多个对象的拷贝，类克隆一定要实现Cloneable接口
+
+- str1==str2 是在判断两个字符串内存地址是否相等
+
+- str.delete(1,3) 删除1到2（不包括3）字符
+
+- str.split(";");  用；分割字符串
+
+- java 不准参数设置默认值
+
+- java不会传递对象，只对传递对象引用，按引用传递对象，数组也是引用传递，值才会传递
+
+- 静态函数不能调用非静态函数
+
+- public static void main（String[] args)
+
+- if(x=y)编译不过
+
+- 子类可以访问所有（子类和超类）的public和protected方法
+
+- private 修饰方法与属性只能在同一个类访问
+
+- java变量一定要初始化
+
+- java类只能单继承，或者伪多继承
+
+- 线程是一次性消耗品，执行run()方法后，线程结束后销毁。不能再次start，只能重新建立新的线程对象。
+
+- runnable接口必须重写run()
+
+- Java.Lang.throwable 所有异常的基类
+
+- bool值不可与任何其他类型转化 或 比较
+
+- 类和对象只是同一个东西不同名称，类是对象的模板，对象是类的具体实例
+
+- list常用方法
+
+```java
+增 add(Object obj)
+
+删 remove(Index value/Object obj)
+
+改 set(int index, Object obj)
+
+查 get(int index)
+
+插 add(int index, Object obj)
+
+长度 size()
+```
+
+- static随类加载而加载，可以修饰：属性，方法，代码块，内部类
+- - final static 修饰全局常量和属性
+- private 私有的new不了，也不能重写
+- 抽象的父类，以至于他没有具体的实例，这样类叫做抽象类。
+- 方法可以重写，构造器不能重写，只能重载
+- 类是单继承的，接口实现多继承效果
+- 接口只能定义全局常量和抽象方法，接口中不能定义构造器，意味着不可以实例化
+- 接口只能通过类+implements方式使用
+- 实现类实现了接口中的抽象方法
+
+99 封装性
+
+实际问题中，我们要给属性赋值加入额外的限制条件，这个条件不能在属性声明时体现，只能通过方法进行限制条件添加，我们要避免用户用对象给属性赋值。则我们需要将属性声明为私有的(private)，体现了封装性
+
+  - 我们将xxx属性私有化，同时提供公共的方法来获取（getxxx）和设置（setxxx）
+
+  - 扩展：封装性体现在，1如上 2不对外暴露私有的方法 3 单例模式
+
+  - 封装性体现通过修饰符实现，四种权限(从小到大)：private < 缺省 < protected < public
+
+  - 四种权限来修饰类及类内部结构：属性，方法，构造器，内部类
+
+  - 修饰类只能用： 缺省 public
+
+    
+
+- 可变参数的方法
+
+```java
+public void show(String ... strs){ //可变形参，只能有一个，写在列表最后面
+	把strs当字符串数组处理即可
+}
+```
+
+- 同时保留public void show(String strs){}
+
+65 final修饰类，属性可修改吗？
+基础数据类型，final修饰肯定不变		
+引用数据类型，final修饰引用地址不变，内容不变——String、StringBuffer、ArrayList、HashSet、HashMap等。
+
+final最终的
+
+- 1 final 可以用来修饰结构：类，方法，变量
+- 2final用来修饰一个类，不能被其他类继承
+  - - 比如：String、System、StringBuffer类
+
+  - 3final用来修饰方法，表明此方法不可以被重写
+
+  - - 比如：Object中的getClass()
+
+  - 4final变量
+
+  - - 修饰属性，可以显示初始化/代码块初始化/构造器初始化赋值一次，且只可赋值一次
+    - 修饰局部变量，尤其是修饰形参时，表明此形参是一个常量，当我们调用方法时，给常量形参赋一个实参
+
+​    一旦赋值以后，就只能使用不能修改
+
+
+
+![img](https://img-blog.csdn.net/20180607221353561)
+
+八种基本类型：[int short long] bool byte double
+
+![img](https://pic4.zhimg.com/v2-a4de2da2942089375382858919e3ae63_b.png)
+
+70 String类为什么是final类型
+
+答：
+
+- 为了实现常量池(只有当字符是不可变的，字符串池才有可能实现)
+- 为了线程安全(字符串自己便是线程安全的)
+- 为了实现String可以创建HashCode不可变性
+- 为了安全性和效率，地址不变值可变
+
+
+
+String相关内容
+
+>String创建不变对象，被多线程访问保持一致性
+>创建后，常量池缓存，有新的相同字符串返回缓存引用
+>final：不可被继承，提升安全性
+
+> == 		判断两个String是不是相同地址
+> equals   判断两者是否相等值
+
+
+>系统内存分为四个：
+>heap 堆 放 对象 也就是new 出来的东西
+>stack 栈 放局部变量
+>static segment 静态区 用来放 **静态变量** 和**字符串常量**
+>data segement 代码区 用来放代码的
+>
+>如果 一个字符串是 String s = "abc";它放在栈里
+>如果一个字符串 用创建对象的方式 String s = new String("abc");
+>那它是放在了 堆里 而如果单纯的 一个 "abc" 这个输入[字符串常量](https://www.baidu.com/s?wd=字符串常量&tn=SE_PcZhidaonwhc_ngpagmjz&rsv_dl=gh_pc_zhidao) 是放在static segement里
+
+1) 讨论字符串相等与否
+
+String a = "123"; String b = "123"; a==b的结果是什么？ 这包含了内存，String存储方式等诸多知识点。
+
+> a和b指向同一个对象，地址相同数据相同 --> **true**
+
+String a=new String("Hello");String b=new String("Hello");
+
+> a和b指向不同对象，地址不同数据相同-->**false**
+
+> 以上两个都a.equals(b)都是-->**ture**
+
+> StringBuilder:		不安全	 高		可变								单线程大数据
+> StringBuffer:		  安全		中		可变								多线程大数据
+> String:				   安全 	    低	   不变（不同的生成新的）少量数据
+
+hashMap怎么解决hash碰撞
+
+1. 开放地址法，+di序列，再去探测没有用的槽
+2. 再hash法，准备多个hash函数
+3. 链地址法，每个节点存一个链表，同key的链表，1.8后就是用链表+红黑树来解决
+
+42 HashMap里的hashcode方法和equal方法什么时候需要重写？如果不重写会有什么后果？对此大家可以进一步了解HashMap（甚至ConcurrentHashMap）的底层实现。
+
+> equal指向地址是否相同(内部==比较运算符)，如果判断值是否相同需要重写
+>
+> hashcode返回地址的散列hash，如果散列不同
+> hashcode在HashMap和HashSet必须重写，因为插入、删除不能是散列的值
+>
+> 如果hash值相同放到同一个bucket里面，
+
+>hashcode和equals必须同时重写，
+>自定义对象作为Map键，必须重写以上的两项
+
+> 散列哈希+链表/红黑树（超过阈值）
+> concurrentHashMap 加了**synchronized**，保证put/get方法
+
+>hashCode作用
+>
+>返回对象的哈希代码值，散列码，支持哈希表
+>提高哈希表性能
+
+HashMap:
+
+>存储结构：数组+链表+红黑树
+>容量：16
+>装载因子：0.75
+>Key/Value：泛型	key可为null -> table[0]
+>hashCode：计算键的hashCode查找对象存储位置
+>equals：hashMap判断键与表中键是否相等
+
+71 HashMap底层数据结构及原理
+
+- 数组+链表+(1.8增加了 红黑树)
+- 搞懂hashCode作用
+- put和get的过程
+- hash冲突是什么
+
+  1. 利用key的hashCode重新hash计算出当前对象的元素在数组中的下标
+  2. put存时，如果出现hash值相同的key，此时有两种情况。
+     a :如果key相同，则覆盖原始值；b: 如果key不同（hash冲突啦），则将当前的key-value放到链表中
+  3. get获取时，直接找到hash值对应的下标，在进一步判断key是否相同，从而找到对应值。
+  4. HashMap是如何解决hash冲突问题（数组+链表），核心就是使用了数组的存储方式，然后将冲突的key的对象放入链表中，一旦发现冲突就在链表中做进一步的对比。
+
+84Map种类及区别
+
+HashMap 非线程安全
+ConcurrentHashMap 线程安全
+
+并发情况：
+ConcurrentHashMap和HashTable
+两者hash计算公式不同，后者不用红黑树
+前者用CAS算法保证，后者用synchronized+代码块
+
+顺序Map实现类：LinkedHashMap(进入顺序)和TreeMap（数据大小顺序）
+
+---
+
+HashMap和Vector静态集合类持续添加使用；
+释放对象时候要删除监听器；
+数据库 网络连接没有关闭；
+单例模式，单例对象持有外部对象引用，不能GC。
+
+43 ArrayList和LinkedList底层实现有什么差别？它们各自适用于哪些场合？对此大家也可以了解下相关底层代码。
+
+> 都是线程不安全的，继承了Cloneable List Serializable接口
+> ArrayList是数组，查找快
+> LinkedList是循环双向链表，删除增加快
+
+89 ArrayList的SubList方法返回值不是ArrayList，是内部类SubList。
+
+99 linkedlist用iterator
+arraylist用for，可以随机存储，可索引访问
+
+58 安全删除遍历ArrayList一个元素？
+快速失败机制，不要用foreach 删/增 （remove/add）
+用iterator模式的remove，若并发还要加对象锁
+
+56 Object常见方法
+toString()	hashCode()	equals()	wait()	notify()
+
+59 迭代器：不同集合提供统一的遍历操作接口
+
+44 volatile关键字有什么作用？由此展开，大家可以了解下线程内存和堆内存的差别。
+
+> 是一个类型修饰符。volatile修饰的变量具有可见性，即保证线程读取到的是最新更新的值。线程不拷贝内存变量而是直接读取内存中的变量，当内存中变量被其他线程修改后线程能立马知道。同步是锁定变量，只允许一个线程对其进行操作，是原子性动作。volatile修饰不一定是线程安全的。
+>
+> 某共享变量，每个线程都缓存一个该变量的副本。当一个线程更新其副本(高速缓存区)时，其他的操作单元可能没有及时发现，进而产生缓存一致性问题。
+>
+> JMM内存模型，堆内存上面叠放线程内存，每次都打到底，改了也会去更新别的线程内存的副本。
+
+94 HashMap实现
+
+ jdk7 底层 数组+链表；
+
+jdk8 底层 数组+链表（装树的根）+红黑树（左小右大）
+
+
+
+51 枚举使用场景，某个字段有几个不同取值，在写foreach用。
+
+---
+
+- 通过一个对象的引用访问静态成员属性或者方法时 ，访问操作只与所声明的引用类型相关 ；与引用对象是否为 null 无关 ，因为访问静态成员不需要实例化对象 ；即便引用不为 null ，也与运行时多态无关 ，因为静态成员是类相关的 。
+
+---
+
+jdk 8 中注解新特性，可重复注解，类型注解
+
+1. 可重复注解
+
+2. 类型注解
+
+注解就是类中的特殊标记，反射中读标记，在编译，类加载，运行时读取
+
+
+
+**类初始化顺序**
+静态变量 静态初始化块
+变量 初始化块
+构造器
+先父后子

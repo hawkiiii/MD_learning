@@ -1,0 +1,11 @@
+- Command + alt + b 	  查看接口所有实现类
+- **alt + k                          自动跳到某个位置？？**
+- alt + enter                     自动补全
+- alt + enter                     自动导入包
+- Cmd + shift + alt + u     显示class diagram
+  Cmd + alt + b                显示所有实现 按 enter
+- Ctrl + enter                     自动生成构造器
+- Ctrl + alt + t                    try/catch 快捷键
+- Cmd + alt + v                 new Obj 自动补全
+- Cmd + alt + 左 右          切换前后位置
+- Cmd + alt + s                调换出GsonFormat
