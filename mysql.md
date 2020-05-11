@@ -966,6 +966,12 @@ https://stackoverflow.com/questions/2914936/mysql-foreign-key-constraints-cascad
 
 http://www.mysqltutorial.org/mysql-on-delete-cascade/
 
+## druid数据源
+
+阿里的一个数据源，效率低，安全性高；
+
+springboot内置数据源，效率高，安全性低。
+
 # mysql表链接
 
 题目】

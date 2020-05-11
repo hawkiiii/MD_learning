@@ -1,3 +1,22 @@
+**容器镜像服务**
+
+https://x9k2w806.mirror.aliyuncs.com
+
+```shell
+sudo mkdir -p /etc/docker
+sudo tee /etc/docker/daemon.json <<-'EOF'
+{
+  "registry-mirrors": ["https://x9k2w806.mirror.aliyuncs.com"]
+}
+EOF
+sudo systemctl daemon-reload
+sudo systemctl restart docker
+```
+
+```shell
+docker pull mysql:5.7
+```
+
 0 docker安装
 
 [docker安装教程](https://www.jianshu.com/p/9b1fddbf0dad)
