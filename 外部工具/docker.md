@@ -13,6 +13,8 @@
 
 **仓库**：装镜像的
 
+![image-20200515220759565](./面试img/image-20200515220759565.png)
+
 
 
 ```shell
@@ -120,3 +122,195 @@ docker ps -a -q | xargs docker rm
 ![image-20200514220304660](../面试img/image-20200514220304660.png)
 
 ![image-20200514220539365](../面试img/image-20200514220539365.png)
+
+# 容器数据卷
+
+## 什么是容器数据卷
+
+## 使用数据卷
+
+> 方式1：直接使用命令来挂载 -v
+
+```shell
+docker run -it -v 主机目录:容器目录
+```
+
+两个互相挂载，即是同一个文件
+
+## *实战：安装MySQL
+
+```shell
+#同步两个mysql数据
+docker pull mysql:5.7
+#链接数据库 配置文件卷映射 端口映射 设置密码 hub.docker.com查 名字设置和镜像版本
+docker run -d -p 3310:3306 -v /home/mysql/conf:/etc/mysql/conf.d -v /home/mysql/data:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=admin --name mysql01 mysql:5.7
+```
+
+操作数据库，同时在两个文件夹下产生影响
+
+## 具名挂载和匿名挂载
+
+```shell
+# 匿名挂载
+-v 容器内路径
+docker run -d -P --name nginx01 -v /etc/nginx nginx
+# 查看所有volume情况
+docker volume ls
+
+#具名挂载
+docker run -d -P --name nginx02 -v juming_guazai:/etc/nginx nginx
+
+```
+
+所有docker容器内的卷，没有指定目录的情况下都是在 **/var/lib/docker/volumes/xxxxx/_data**
+
+我们通过具名挂载可以方便找到我们的一个大卷，大多数情况在使用**具名挂载**
+
+```shell
+#如何分辨何种挂载
+-v 容器内路径 #匿名挂载
+-v 卷名:容器内路径 #具名挂载
+-v 主机目录:容器目录 #指定路径挂载
+```
+
+扩展
+
+```shell
+#
+ro #只读
+rw #可读可写
+
+docker run -d -P --name nginx02 -v juming_guazai:/etc/nginx:rw nginx
+```
+
+## 使用dockerfile挂载
+
+- 见初识Dockerfile
+
+其他容器挂载到父容器，docker01 是父容器，docker02子容器，两个卷映射起来
+--volumes-form
+
+```shell
+docker run -it --name docker01
+docker run -it --name docker02 --volumes-from docker01 hawkii/centos:1.0
+```
+
+```shell
+#多个mysql实现数据共享
+docker run -d -p 3310:3306 -v /etc/mysql/conf.d -v /var/lib/mysql -e MYSQL_ROOT_PASSWORD=admin --name mysql01 mysql:5.7
+docker run -d -p 3310:3306 -e MYSQL_ROOT_PASSWORD=admin --name mysql02 --volumes-from mysql01 mysql:5.7
+#这个时候 可以实现两个容器的数据同步
+```
+
+# Dockerfile
+
+dockerfile是用来构建docker镜像的文件
+
+## 步骤和概念
+
+1. 编写一个dockerfile文件
+2. docker build构建一个镜像
+3. docker run运行镜像
+4. docker push 发布镜像 （DockerHub 阿里云镜像仓库）
+
+---
+
+![image-20200515205445236](../面试img/image-20200515205445236.png)
+
+![img](../面试img/u=2852815432,3861746311&fm=26&gp=0.jpg)
+
+## 初识Dockerfile
+
+```dockfile
+FROM centos
+
+VOLUME ["volume01","volume02"]
+
+CMD echo "---end---"
+CMD /bin/bash
+```
+
+```shell
+#镜像名字没有斜杠
+[root@localhost ceshi]# docker build -f df0 -t hawkii/centos .
+```
+
+增加两个匿名挂载目录
+
+![image-20200515195759473](../面试img/image-20200515195759473.png)
+
+## 自己制作centos镜像
+
+添加 not-tools 和 vim 功能，设置工作目录
+
+![image-20200515210453738](/Users/hawkii/Library/Application Support/typora-user-images/image-20200515210453738.png)
+
+```shell
+#得到docker如何做的，都是增量添加
+docker history 镜像ID
+```
+
+**CMD**和**ENTRYPOINT**
+
+![image-20200515211617259](../面试img/image-20200515211617259.png)
+
+![image-20200515212839871](../面试img/image-20200515212839871.png)
+
+## 发布自己镜像
+
+![image-20200515212907733](../面试img/image-20200515212907733.png)
+
+推送自己镜像到docker仓库
+创建自己阿里云镜像仓库
+
+
+
+# Docker网络
+
+Docker使用的是Linux桥接，Docker0是公共路由器
+
+evth-pair
+
+![image-20200515224547396](../面试img/image-20200515224547396.png)
+
+![image-20200515225033311](../面试img/image-20200515225033311.png)
+
+![image-20200515230936926](../面试img/image-20200515230936926.png)
+
+清掉所有docker镜像
+
+```shell
+#删掉所有镜像
+docker rm -f $(docker ps -aq)
+```
+
+![image-20200515231713271](../面试img/image-20200515231713271.png)
+
+![image-20200515232027733](../面试img/image-20200515232027733.png)
+
+## redis集群
+
+![image-20200515234558883](../面试img/image-20200515234558883.png)
+
+开启高可用
+
+## springboot部署docker
+
+![image-20200516000138238](../面试img/image-20200516000138238.png)
+
+```dockerfile
+FROM java:8
+WORKDIR /usr/local/web
+ADD springboot.jar /usr/local/web
+EXPOSE 8092
+CMD ["java","-jar","springboot.jar"]
+```
+
+
+
+```shell
+docker build -f Dockerfile -t hawkii/springboot .
+
+docker run -di -p 8092:8080  --name=springboot hawkii/springboot
+```
+
