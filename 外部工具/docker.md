@@ -269,6 +269,42 @@ docker history 镜像ID
 
 Docker使用的是Linux桥接，Docker0是公共路由器
 
+## 自定义网络
+
+```shell
+#显示出所有网络连接模式
+docker network ls
+```
+
+```shell
+#删掉所有镜像,保证虚拟机 镜像完全干净
+docker rm -f $(docker ps -aq)
+```
+
+```shell
+# 我们直接启动的命令 --net bridge，而这些是我们docker0
+docker run -d -P --name tomcat01 tomcat
+docker run -d -P --name tomcat01 tomcat --net bridge tomcat
+
+#docker0特点，默认，域名不能访问， --link可以打通链接
+
+#我们可以自定义一个网络
+# --driver bridge
+# --subnet 192.168.0.0/16 	192.168.0.2   192.168.255.255
+# --gateway 192.168.0.1
+docker network create --driver bridge --subnet 192.168.0.0/16 --gateway 192.168.0.1 mynet
+```
+
+![image-20200516152809842](../面试img/image-20200516152809842.png)
+
+```shell
+#至此为止，可以选择这个网络，不用再走docker0
+docker run -d -P --name tomcat-net-01 --net mynet tomcat
+docker run -d -P --name tomcat-net-02 --net mynet tomcat
+```
+
+![image-20200516153040710](../面试img/image-20200516153040710.png)
+
 evth-pair
 
 ![image-20200515224547396](../面试img/image-20200515224547396.png)
@@ -277,12 +313,7 @@ evth-pair
 
 ![image-20200515230936926](../面试img/image-20200515230936926.png)
 
-清掉所有docker镜像
 
-```shell
-#删掉所有镜像
-docker rm -f $(docker ps -aq)
-```
 
 ![image-20200515231713271](../面试img/image-20200515231713271.png)
 

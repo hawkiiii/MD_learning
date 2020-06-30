@@ -1,5 +1,16 @@
 
 
+# 启动redis
+
+```shell
+#定位到本机redis
+cd /usr/local/redis
+#运行server
+redis-server redis.conf
+#redis登陆服务器
+redis-cli
+```
+
 # Nosql概述
 
 非关系型数据库Not only sql
